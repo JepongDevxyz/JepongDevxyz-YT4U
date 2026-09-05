@@ -22,9 +22,9 @@ export default async function handler(req, res) {
             throw new Error("Missing RapidAPI Key in Environment Variables.");
         }
 
-        const requestedFormat = (format && format.toLowerCase() === 'mp4') ? 'mp4' : 'mp3';
+        const isMp4 = format && format.toLowerCase() === 'mp4';
 
-        // Fetch download link mula sa RapidAPI
+        // Fetch mula sa RapidAPI
         const apiResponse = await fetch(`https://youtube-mp36.p.rapidapi.com/dl?id=${videoId}`, {
             method: 'GET',
             headers: {
@@ -39,21 +39,20 @@ export default async function handler(req, res) {
             throw new Error(data.msg || "Hindi ma-extract ang video details.");
         }
 
-        // KUNG MP4: Ibalik ang direct download details sa JSON format
-        if (requestedFormat === 'mp4') {
+        // Kung MP4: Direct video URL ang ibabalik
+        if (isMp4) {
             return res.status(200).json({
                 title: data.title,
-                downloadUrl: data.link, // Direct MP4 video download link
+                downloadUrl: data.link,
                 format: 'mp4'
             });
         }
 
-        // KUNG MP3: I-fetch ang audio buffer para ma-strip ang thumbnail (APIC tag)
+        // Kung MP3: Fetch audio at tanggalin ang Album Art/Thumbnail gamit ang node-id3
         const audioResponse = await fetch(data.link);
         const arrayBuffer = await audioResponse.arrayBuffer();
         let audioBuffer = Buffer.from(arrayBuffer);
 
-        // Alisin ang nakakabit na Album Art/Thumbnail gamit ang node-id3
         const cleanBuffer = NodeID3.removeTagsFromBuffer(audioBuffer);
 
         const cleanTags = {
