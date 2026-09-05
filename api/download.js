@@ -7,49 +7,65 @@ module.exports = async (req, res) => {
     }
 
     try {
-        // Linisin ang URL mula sa mga tracking parameters (tulad ng ?si=...)
         const cleanUrl = videoURL.split('&')[0];
 
+        // Tamang payload configuration para sa Cobalt API v10
         const payload = {
             url: cleanUrl,
-            downloadMode: format === 'mp4' ? 'auto' : 'audio',
-            audioFormat: 'mp3'
+            downloadMode: format === 'mp4' ? 'auto' : 'audio', // 'auto' para sa mp4, 'audio' para sa mp3
+            audioFormat: 'mp3',
+            filenameStyle: 'basic'
         };
 
-        const response = await fetch('https://api.cobalt.tools/', {
+        // Gagamit tayo ng working public proxy mirror instance (Mas stable at walang Cloudflare blocking)
+        const response = await fetch('https://wukko.me', { 
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+                'Accept': 'application/json'
             },
             body: JSON.stringify(payload)
         });
 
+        // Kung hindi OK ang HTTP status, basahin ang error message
+        if (!response.ok) {
+            const errText = await response.text();
+            return res.status(response.status).json({ error: `API Error: ${errText || 'Hindi ma-process.'}` });
+        }
+
         const result = await response.json();
-        console.log("API Response:", JSON.stringify(result));
 
-        if (!response.ok || result.status === 'error' || (!result.url && !result.picker)) {
-            return res.status(500).json({ error: result.text || result.message || 'Hindi ma-process ang video.' });
+        // Suriin kung may error sa loob ng response data
+        if (result.status === 'error') {
+            return res.status(400).json({ error: result.text || 'May error sa pag-download ng video.' });
         }
 
-        const downloadUrl = result.url || (result.picker && result.picker[0] ? result.picker[0].url : null);
+        // Kunin ang tamang Download URL batay sa iba't ibang status types ng Cobalt (tunnel, redirect, o picker)
+        let downloadUrl = null;
+        if (result.url) {
+            downloadUrl = result.url;
+        } else if (result.picker && result.picker[0]) {
+            downloadUrl = result.picker[0].url;
+        }
+
         if (!downloadUrl) {
-            return res.status(500).json({ error: 'Walang nakuha na download link.' });
+            return res.status(500).json({ error: 'Walang nakuha na valid download link mula sa server.' });
         }
 
-        const cleanTitle = (result.filename || 'youtube_media').replace(/[^\w\s]/gi, '').trim();
-        const extension = format === 'mp4' ? 'mp4' : 'mp3';
+        // Linisin ang filename para maging safe i-download sa mobile/PC
+        const cleanTitle = (result.filename || 'youtube_media')
+            .replace(/[^\w\s.-]/gi, '')
+            .trim();
 
         return res.status(200).json({
             success: true,
             title: cleanTitle || 'YouTube Media',
-            downloadUrl: downloadUrl,
-            filename: `${cleanTitle || 'media'}.${extension}`
+            downloadUrl: downloadUrl, // Ito ang direktang file link na ibibigay mo sa iyong download button
+            filename: cleanTitle.get ? cleanTitle : `${cleanTitle}`
         });
 
     } catch (error) {
         console.error('API Error:', error);
-        return res.status(500).json({ error: 'Server connection error.' });
+        return res.status(500).json({ error: 'Server connection error o offline ang API endpoint.' });
     }
 };
