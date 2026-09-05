@@ -5,29 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube to MP3 Converter</title>
     <style>
+        :root {
+            --bg-color: #f4f5f7;
+            --card-bg: #ffffff;
+            --text-main: #111111;
+            --text-sub: #666666;
+            --border-color: #cccccc;
+            --input-bg: #ffffff;
+            --status-bg: #fafafa;
+            --footer-bg: #ffffff;
+            --footer-border: #eaeaea;
+            --dropdown-bg: #ffffff;
+            --dropdown-hover: #f0f0f0;
+            --primary: #00a2ff;
+            --primary-hover: #0086d6;
+            --shadow: rgba(0, 0, 0, 0.08);
+            --toast-bg: #ff4d4f;
+            --toast-text: #ffffff;
+        }
+
+        /* AUTO DARK MODE SYNC */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #121212;
+                --card-bg: #1e1e1e;
+                --text-main: #f1f1f1;
+                --text-sub: #a0a0a0;
+                --border-color: #333333;
+                --input-bg: #2a2a2a;
+                --status-bg: #252525;
+                --footer-bg: #1e1e1e;
+                --footer-border: #2a2a2a;
+                --dropdown-bg: #2a2a2a;
+                --dropdown-hover: #383838;
+                --shadow: rgba(0, 0, 0, 0.4);
+                --toast-bg: #2c1a1d;
+                --toast-text: #ff7875;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f5f7;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            color: #333;
+            color: var(--text-main);
+            transition: background-color 0.3s, color 0.3s;
         }
-        header {
-            background-color: #1b1b1b;
-            color: #fff;
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        header h1 {
-            font-size: 20px;
-            margin: 0;
-            color: #00a2ff;
-        }
+
         .container {
             flex: 1;
             display: flex;
@@ -36,65 +70,152 @@
             justify-content: center;
             padding: 20px;
             text-align: center;
+            width: 100%;
         }
+
         h2 {
             font-size: 28px;
             margin-bottom: 8px;
-            color: #111;
+            color: var(--text-main);
         }
+
         p.subtitle {
-            color: #666;
+            color: var(--text-sub);
             font-size: 14px;
             margin-bottom: 25px;
-        }
-        .converter-box {
-            background: #ffffff;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            width: 100%;
             max-width: 550px;
         }
+
+        .converter-box {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px var(--shadow);
+            width: 100%;
+            max-width: 550px;
+            transition: background 0.3s;
+        }
+
         .input-group {
             display: flex;
             gap: 8px;
             margin-bottom: 15px;
+            position: relative;
         }
+
         input[type="text"] {
             flex: 1;
             padding: 12px 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
             font-size: 15px;
             outline: none;
+            width: 100%;
+            background: var(--input-bg);
+            color: var(--text-main);
+            transition: border-color 0.2s, background 0.3s;
         }
+
         input[type="text"]:focus {
-            border-color: #00a2ff;
+            border-color: var(--primary);
         }
-        select {
-            padding: 12px 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background: #fff;
+
+        /* CUSTOM MODERN POP-UP DROPDOWN */
+        .custom-dropdown {
+            position: relative;
+            user-select: none;
+        }
+
+        .dropdown-trigger {
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--input-bg);
+            color: var(--text-main);
             font-size: 14px;
-            outline: none;
+            font-weight: bold;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            height: 100%;
+            transition: border-color 0.2s, background 0.3s;
         }
+
+        .dropdown-trigger:hover {
+            border-color: var(--primary);
+        }
+
+        .dropdown-arrow {
+            font-size: 10px;
+            transition: transform 0.2s ease;
+        }
+
+        .custom-dropdown.active .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0;
+            width: 100px;
+            background: var(--dropdown-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px var(--shadow);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 100;
+            opacity: 0;
+            transform: translateY(-8px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .custom-dropdown.active .dropdown-menu {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .dropdown-option {
+            padding: 10px 14px;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--text-main);
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.15s;
+        }
+
+        .dropdown-option:hover {
+            background: var(--dropdown-hover);
+            color: var(--primary);
+        }
+
+        .dropdown-option.selected {
+            color: var(--primary);
+            background: var(--dropdown-hover);
+        }
+
         button.convert-btn {
-            background-color: #00a2ff;
+            background-color: var(--primary);
             color: white;
             border: none;
             padding: 12px 25px;
             font-size: 15px;
             font-weight: bold;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
             width: 100%;
             transition: background 0.2s;
         }
+
         button.convert-btn:hover {
-            background-color: #0086d6;
+            background-color: var(--primary-hover);
         }
+
         #statusBox {
             margin-top: 15px;
             display: none;
@@ -102,98 +223,158 @@
             justify-content: center;
             gap: 10px;
             padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background: #fafafa;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--status-bg);
             font-size: 14px;
-            color: #333;
+            color: var(--text-main);
         }
+
         .spinner {
             width: 16px;
             height: 16px;
-            border: 2px solid #ccc;
-            border-top: 2px solid #00a2ff;
+            border: 2px solid var(--border-color);
+            border-top: 2px solid var(--primary);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
         .result-box {
             margin-top: 15px;
             display: none;
             text-align: left;
-            border-top: 1px solid #eee;
+            border-top: 1px solid var(--border-color);
             padding-top: 15px;
         }
+
         .video-preview {
             width: 100%;
-            height: 180px;
+            aspect-ratio: 16 / 9;
             background: #000;
-            border-radius: 4px;
+            border-radius: 8px;
             margin-bottom: 12px;
             overflow: hidden;
         }
+
         .video-preview iframe {
             width: 100%;
             height: 100%;
             border: none;
         }
+
         .result-box p {
             font-size: 13px;
             font-weight: bold;
-            color: #444;
+            color: var(--text-sub);
             margin-bottom: 10px;
             word-break: break-all;
         }
+
         .btn-download-action {
             display: block;
             width: 100%;
-            background-color: #00a2ff;
+            background-color: var(--primary);
             color: white;
             text-align: center;
             padding: 12px;
-            border-radius: 4px;
+            border-radius: 8px;
             text-decoration: none;
             font-weight: bold;
             box-sizing: border-box;
             margin-bottom: 8px;
+            transition: background 0.2s;
         }
+
         .btn-download-action:hover {
-            background-color: #0086d6;
+            background-color: var(--primary-hover);
         }
+
+        /* MODERN ERROR TOAST NOTIFICATION */
+        .toast-error {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--toast-bg);
+            color: var(--toast-text);
+            border: 1px solid rgba(255, 77, 79, 0.3);
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 1000;
+            opacity: 0;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+            pointer-events: none;
+            max-width: 90%;
+            width: max-content;
+        }
+
+        .toast-error.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: currentColor;
+            font-size: 16px;
+            cursor: pointer;
+            opacity: 0.7;
+            padding: 0 0 0 8px;
+            line-height: 1;
+        }
+
+        .toast-close:hover {
+            opacity: 1;
+        }
+
         footer {
             text-align: center;
             padding: 15px;
             font-size: 12px;
-            color: #888;
-            background: #fff;
-            border-top: 1px solid #eaeaea;
+            color: var(--text-sub);
+            background: var(--footer-bg);
+            border-top: 1px solid var(--footer-border);
+            width: 100%;
+            transition: background 0.3s;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1 style="display: flex; align-items: center; gap: 5px;"><span style="color: #fff; background: #00a2ff; padding: 2px 6px; border-radius: 3px;">YT</span>MP3</h1>
-        <div style="font-size: 14px; color: #aaa;">Home &nbsp; FAQ &nbsp; Bookmarklet</div>
-    </header>
-
     <div class="container">
-        <h2>YouTube to MP3 Converter</h2>
-        <p class="subtitle">YTMP3 is an online YouTube to mp3 converter that lets you convert YouTube videos into MP3 or MP4 files and download them for free.</p>
+        <h2>YT4U - YouTube Downloader</h2>
+        <p class="subtitle">YT4U is an online tool that lets you convert YouTube videos into MP3 or MP4 files and download them for free.</p>
         
         <div class="converter-box">
             <form id="downloadForm">
                 <div class="input-group">
-                    <input type="text" id="url" placeholder="Paste your YouTube link" required>
-                    <select id="formatSelect">
-                        <option value="mp3">MP3</option>
-                        <option value="mp4">MP4</option>
-                    </select>
+                    <input type="text" id="url" placeholder="YouTube Link" required>
+                    
+                    <div class="custom-dropdown" id="customDropdown">
+                        <div class="dropdown-trigger" id="dropdownTrigger">
+                            <span id="selectedFormatText">MP3</span>
+                            <span class="dropdown-arrow">▼</span>
+                        </div>
+                        <div class="dropdown-menu">
+                            <div class="dropdown-option selected" data-value="mp3">MP3</div>
+                            <div class="dropdown-option" data-value="mp4">MP4</div>
+                        </div>
+                    </div>
                 </div>
-                <button type="submit" class="convert-btn" id="submitBtn">Convert <span id="btnFormatText">MP3</span></button>
+                <button type="submit" class="convert-btn" id="submitBtn">Generate <span id="btnFormatText">MP3</span></button>
             </form>
             
             <div id="statusBox">
@@ -204,13 +385,19 @@
             <div class="result-box" id="resultBox">
                 <div class="video-preview" id="videoPreviewContainer"></div>
                 <p id="videoTitle"></p>
-                <a id="downloadLink" href="#" class="btn-download-action" target="_blank">Download</a>
+                <a id="downloadLink" href="#" class="btn-download-action" target="_blank" rel="noopener noreferrer">Download</a>
             </div>
         </div>
     </div>
 
+    <!-- Modern Error Toast Container -->
+    <div id="errorToast" class="toast-error">
+        <span id="errorToastText">An error occurred</span>
+        <button class="toast-close" id="toastCloseBtn">&times;</button>
+    </div>
+
     <footer>
-        &copy; 2026 YTMP3. All rights reserved.
+        &copy; Jepong Devxyz - YT4U - 2026. All rights reserved.
     </footer>
 
     <script>
@@ -221,12 +408,57 @@
         const resultBox = document.getElementById('resultBox');
         const videoTitle = document.getElementById('videoTitle');
         const downloadLink = document.getElementById('downloadLink');
-        const formatSelect = document.getElementById('formatSelect');
         const btnFormatText = document.getElementById('btnFormatText');
         const videoPreviewContainer = document.getElementById('videoPreviewContainer');
 
-        formatSelect.addEventListener('change', () => {
-            btnFormatText.innerText = formatSelect.value.toUpperCase();
+        // Toast Error UI Logic
+        const errorToast = document.getElementById('errorToast');
+        const errorToastText = document.getElementById('errorToastText');
+        const toastCloseBtn = document.getElementById('toastCloseBtn');
+        let toastTimeout;
+
+        function showErrorToast(msg) {
+            clearTimeout(toastTimeout);
+            errorToastText.innerText = msg;
+            errorToast.classList.add('show');
+            
+            toastTimeout = setTimeout(() => {
+                errorToast.classList.remove('show');
+            }, 4000);
+        }
+
+        toastCloseBtn.addEventListener('click', () => {
+            errorToast.classList.remove('show');
+        });
+
+        // Custom Dropdown Logic
+        const customDropdown = document.getElementById('customDropdown');
+        const dropdownTrigger = document.getElementById('dropdownTrigger');
+        const selectedFormatText = document.getElementById('selectedFormatText');
+        const dropdownOptions = document.querySelectorAll('.dropdown-option');
+        let selectedFormat = 'mp3';
+
+        dropdownTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            customDropdown.classList.toggle('active');
+        });
+
+        dropdownOptions.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdownOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                
+                selectedFormat = option.getAttribute('data-value');
+                selectedFormatText.innerText = selectedFormat.toUpperCase();
+                btnFormatText.innerText = selectedFormat.toUpperCase();
+                
+                customDropdown.classList.remove('active');
+            });
+        });
+
+        document.addEventListener('click', () => {
+            customDropdown.classList.remove('active');
         });
 
         function extractYouTubeID(url) {
@@ -237,8 +469,7 @@
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const videoUrl = document.getElementById('url').value;
-            const selectedFormat = formatSelect.value;
+            const videoUrl = document.getElementById('url').value.trim();
             
             submitBtn.disabled = true;
             resultBox.style.display = 'none';
@@ -258,7 +489,7 @@
                     statusText.innerText = steps[stepIdx];
                     stepIdx++;
                 }
-            }, 400);
+            }, 300);
 
             try {
                 const res = await fetch(`/api/download?url=${encodeURIComponent(videoUrl)}&format=${selectedFormat}`);
@@ -271,7 +502,6 @@
                 statusBox.style.display = 'none';
                 videoTitle.innerText = data.title;
                 
-                // I-embed ang YouTube Video Preview gamit ang Video ID
                 const videoId = extractYouTubeID(videoUrl);
                 if (videoId) {
                     videoPreviewContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>`;
@@ -281,12 +511,12 @@
 
                 downloadLink.href = data.downloadUrl;
                 downloadLink.setAttribute('download', data.filename);
-                downloadLink.innerText = `Download ${selectedFormat.toUpperCase()}`;
+                downloadLink.innerText = `Download`;
                 resultBox.style.display = 'block';
             } catch (err) {
                 clearInterval(interval);
                 statusBox.style.display = 'none';
-                alert("Error: " + err.message);
+                showErrorToast(err.message);
             } finally {
                 submitBtn.disabled = false;
             }
