@@ -7,7 +7,6 @@ export default async function handler(req, res) {
 
     try {
         if (req.method === 'POST') {
-            // Kunin ang kasalukuyang count
             const getRes = await fetch(KVDB_URL);
             let currentCount = 0;
             if (getRes.ok) {
@@ -15,7 +14,6 @@ export default async function handler(req, res) {
                 currentCount = parseInt(text, 10) || 0;
             }
             
-            // Dagdagan ng 1 at i-save ulit sa KVDB
             const newCount = currentCount + 1;
             await fetch(KVDB_URL, {
                 method: 'POST',
@@ -24,7 +22,6 @@ export default async function handler(req, res) {
 
             return res.status(200).json({ count: newCount });
         } else {
-            // GET request para sa pag-read ng count
             const getRes = await fetch(KVDB_URL);
             let currentCount = 0;
             if (getRes.ok) {
