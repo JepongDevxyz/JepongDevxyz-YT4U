@@ -455,6 +455,7 @@
         const urlInput = document.getElementById('url');
         const counterValue = document.getElementById('counterValue');
 
+        // Toast Notification
         const toast = document.getElementById('toast');
         const toastText = document.getElementById('toastText');
         const toastCloseBtn = document.getElementById('toastCloseBtn');
@@ -474,15 +475,36 @@
             toast.classList.remove('show');
         });
 
-        let count = parseInt(localStorage.getItem('yt4u_gen_count') || '0', 10);
-        counterValue.innerText = count;
-
-        function incrementCounter() {
-            count++;
-            localStorage.setItem('yt4u_gen_count', count.toString());
-            counterValue.innerText = count;
+        // Global Real-time Counter Functions
+        async function fetchGlobalCount() {
+            try {
+                const res = await fetch('/api/counter');
+                const data = await res.json();
+                if (data.count !== undefined) {
+                    counterValue.innerText = data.count;
+                }
+            } catch (err) {
+                console.error("Failed to fetch counter", err);
+            }
         }
 
+        async function incrementGlobalCounter() {
+            try {
+                const res = await fetch('/api/counter', { method: 'POST' });
+                const data = await res.json();
+                if (data.count !== undefined) {
+                    counterValue.innerText = data.count;
+                }
+            } catch (err) {
+                console.error("Failed to increment counter", err);
+            }
+        }
+
+        // I-fetch ang bilang sa unang bukas ng page at mag-sync bawat 3 segundo
+        fetchGlobalCount();
+        setInterval(fetchGlobalCount, 3000);
+
+        // Custom Format Dropdown Logic
         const customDropdown = document.getElementById('customDropdown');
         const dropdownTrigger = document.getElementById('dropdownTrigger');
         const selectedFormatText = document.getElementById('selectedFormatText');
@@ -546,17 +568,15 @@
                 const videoId = extractYouTubeID(videoUrl);
                 
                 if (selectedFormat === 'mp3') {
-                    // Direct link sa ating MP3 stripping backend API
                     downloadLink.href = `/api/download?url=${encodeURIComponent(videoUrl)}&format=mp3`;
                     videoTitle.innerText = "Audio Ready (Cleaned MP3)";
                 } else {
-                    // I-fetch muna ang MP4 video details mula sa API
                     const res = await fetch(`/api/download?url=${encodeURIComponent(videoUrl)}&format=mp4`);
                     const data = await res.json();
                     if (!res.ok) throw new Error(data.error || 'Conversion failed.');
                     
                     videoTitle.innerText = data.title;
-                    downloadLink.href = data.downloadUrl; // Direct link sa RapidAPI MP4 file
+                    downloadLink.href = data.downloadUrl;
                 }
                 
                 clearInterval(interval);
@@ -570,7 +590,10 @@
 
                 downloadLink.innerText = `Download ${selectedFormat.toUpperCase()}`;
                 resultBox.style.display = 'block';
-                incrementCounter();
+                
+                // Magdaragdag ng +1 sa global counter
+                await incrementGlobalCounter();
+
             } catch (err) {
                 clearInterval(interval);
                 statusBox.style.display = 'none';
