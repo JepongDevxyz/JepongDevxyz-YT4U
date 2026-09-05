@@ -1,0 +1,10 @@
+{
+  "name": "jepongdevxyz-yt4u",
+  "version": "1.0.0",
+  "description": "YouTube MP3 & MP4 Downloader for Vercel",
+  "main": "api/download.js",
+  "dependencies": {
+    "express": "^4.19.2",
+    "@distube/ytdl-core": "^4.15.3"
+  }
+}
