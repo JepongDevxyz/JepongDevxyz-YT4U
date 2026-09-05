@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube to MP3 Converter</title>
+    <title>YouTube Downloader - YT4U</title>
     <style>
         :root {
             --bg-color: #f4f5f7;
@@ -20,11 +20,10 @@
             --primary: #00a2ff;
             --primary-hover: #0086d6;
             --shadow: rgba(0, 0, 0, 0.08);
-            --toast-bg: #ff4d4f;
+            --toast-bg: #111111;
             --toast-text: #ffffff;
         }
 
-        /* AUTO DARK MODE SYNC */
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg-color: #121212;
@@ -39,8 +38,8 @@
                 --dropdown-bg: #2a2a2a;
                 --dropdown-hover: #383838;
                 --shadow: rgba(0, 0, 0, 0.4);
-                --toast-bg: #2c1a1d;
-                --toast-text: #ff7875;
+                --toast-bg: #2a2a2a;
+                --toast-text: #00a2ff;
             }
         }
 
@@ -120,7 +119,6 @@
             border-color: var(--primary);
         }
 
-        /* CUSTOM MODERN POP-UP DROPDOWN */
         .custom-dropdown {
             position: relative;
             user-select: none;
@@ -275,6 +273,12 @@
             word-break: break-all;
         }
 
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
         .btn-download-action {
             display: block;
             width: 100%;
@@ -286,7 +290,6 @@
             text-decoration: none;
             font-weight: bold;
             box-sizing: border-box;
-            margin-bottom: 8px;
             transition: background 0.2s;
         }
 
@@ -294,20 +297,52 @@
             background-color: var(--primary-hover);
         }
 
-        /* MODERN ERROR TOAST NOTIFICATION */
-        .toast-error {
+        .btn-another-action {
+            display: block;
+            width: 100%;
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-another-action:hover {
+            background-color: var(--dropdown-hover);
+        }
+
+        .counter-badge {
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--text-sub);
+            background: var(--card-bg);
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            display: inline-block;
+        }
+
+        .counter-badge span {
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .toast-container {
             position: fixed;
             bottom: 25px;
             left: 50%;
             transform: translateX(-50%) translateY(100px);
             background: var(--toast-bg);
             color: var(--toast-text);
-            border: 1px solid rgba(255, 77, 79, 0.3);
+            border: 1px solid var(--border-color);
             padding: 12px 20px;
             border-radius: 8px;
             font-size: 14px;
-            font-weight: 500;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+            font-weight: 600;
+            box-shadow: 0 8px 20px var(--shadow);
             display: flex;
             align-items: center;
             gap: 12px;
@@ -319,7 +354,7 @@
             width: max-content;
         }
 
-        .toast-error.show {
+        .toast-container.show {
             transform: translateX(-50%) translateY(0);
             opacity: 1;
             pointer-events: auto;
@@ -385,14 +420,20 @@
             <div class="result-box" id="resultBox">
                 <div class="video-preview" id="videoPreviewContainer"></div>
                 <p id="videoTitle"></p>
-                <a id="downloadLink" href="#" class="btn-download-action" target="_blank" rel="noopener noreferrer">Download</a>
+                <div class="action-buttons">
+                    <a id="downloadLink" href="#" class="btn-download-action" target="_blank" rel="noopener noreferrer">Download</a>
+                    <button id="generateAnotherBtn" class="btn-another-action">Generate Another</button>
+                </div>
             </div>
+        </div>
+
+        <div class="counter-badge">
+            Total Generated: <span id="counterValue">0</span>
         </div>
     </div>
 
-    <!-- Modern Error Toast Container -->
-    <div id="errorToast" class="toast-error">
-        <span id="errorToastText">An error occurred</span>
+    <div id="toast" class="toast-container">
+        <span id="toastText">Powered by Jepong Devxyz</span>
         <button class="toast-close" id="toastCloseBtn">&times;</button>
     </div>
 
@@ -409,29 +450,42 @@
         const videoTitle = document.getElementById('videoTitle');
         const downloadLink = document.getElementById('downloadLink');
         const btnFormatText = document.getElementById('btnFormatText');
+        const generateAnotherBtn = document.getElementById('generateAnotherBtn');
         const videoPreviewContainer = document.getElementById('videoPreviewContainer');
+        const urlInput = document.getElementById('url');
+        const counterValue = document.getElementById('counterValue');
 
-        // Toast Error UI Logic
-        const errorToast = document.getElementById('errorToast');
-        const errorToastText = document.getElementById('errorToastText');
+        // Toast Logic
+        const toast = document.getElementById('toast');
+        const toastText = document.getElementById('toastText');
         const toastCloseBtn = document.getElementById('toastCloseBtn');
         let toastTimeout;
 
-        function showErrorToast(msg) {
+        function showToast(msg) {
             clearTimeout(toastTimeout);
-            errorToastText.innerText = msg;
-            errorToast.classList.add('show');
+            toastText.innerText = msg;
+            toast.classList.add('show');
             
             toastTimeout = setTimeout(() => {
-                errorToast.classList.remove('show');
-            }, 4000);
+                toast.classList.remove('show');
+            }, 3500);
         }
 
         toastCloseBtn.addEventListener('click', () => {
-            errorToast.classList.remove('show');
+            toast.classList.remove('show');
         });
 
-        // Custom Dropdown Logic
+        // Counter
+        let count = parseInt(localStorage.getItem('yt4u_gen_count') || '0', 10);
+        counterValue.innerText = count;
+
+        function incrementCounter() {
+            count++;
+            localStorage.setItem('yt4u_gen_count', count.toString());
+            counterValue.innerText = count;
+        }
+
+        // Custom Dropdown
         const customDropdown = document.getElementById('customDropdown');
         const dropdownTrigger = document.getElementById('dropdownTrigger');
         const selectedFormatText = document.getElementById('selectedFormatText');
@@ -469,7 +523,7 @@
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const videoUrl = document.getElementById('url').value.trim();
+            const videoUrl = urlInput.value.trim();
             
             submitBtn.disabled = true;
             resultBox.style.display = 'none';
@@ -502,6 +556,7 @@
                 statusBox.style.display = 'none';
                 videoTitle.innerText = data.title;
                 
+                // YouTube Video Embedded Preview
                 const videoId = extractYouTubeID(videoUrl);
                 if (videoId) {
                     videoPreviewContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>`;
@@ -511,15 +566,27 @@
 
                 downloadLink.href = data.downloadUrl;
                 downloadLink.setAttribute('download', data.filename);
-                downloadLink.innerText = `Download`;
+                downloadLink.innerText = `Download ${selectedFormat.toUpperCase()}`;
+                
                 resultBox.style.display = 'block';
+                incrementCounter();
             } catch (err) {
                 clearInterval(interval);
                 statusBox.style.display = 'none';
-                showErrorToast(err.message);
+                showToast(err.message || "Failed to convert video");
             } finally {
                 submitBtn.disabled = false;
             }
+        });
+
+        downloadLink.addEventListener('click', () => {
+            showToast("Powered by Jepong Devxyz");
+        });
+
+        generateAnotherBtn.addEventListener('click', () => {
+            resultBox.style.display = 'none';
+            urlInput.value = '';
+            urlInput.focus();
         });
     </script>
 </body>
