@@ -317,7 +317,7 @@
                 <div class="video-preview" id="videoPreviewContainer"></div>
                 <p id="videoTitle"></p>
                 <div class="action-buttons">
-                    <a id="downloadLink" href="#" class="btn-download-action" download>Download MP3</a>
+                    <a id="downloadLink" href="#" class="btn-download-action" target="_blank" rel="noopener noreferrer">Download MP3</a>
                     <button id="generateAnotherBtn" class="btn-another-action">Generate Another</button>
                 </div>
             </div>
@@ -428,8 +428,15 @@
 
             try {
                 const videoId = extractYouTubeID(videoUrl);
-                const downloadApiUrl = `/api/download?url=${encodeURIComponent(videoUrl)}`;
-                
+
+                // Tawagin ang backend API para sa video details at download link
+                const res = await fetch(`/api/download?url=${encodeURIComponent(videoUrl)}&format=mp3`);
+                const data = await res.json();
+
+                if (!res.ok || data.error) {
+                    throw new Error(data.error || "Failed to process video");
+                }
+
                 clearInterval(interval);
                 statusBox.style.display = 'none';
 
@@ -439,8 +446,9 @@
                     videoPreviewContainer.innerHTML = '';
                 }
 
-                videoTitle.innerText = `Ready for download (MP3)`;
-                downloadLink.href = downloadApiUrl;
+                videoTitle.innerText = data.title || "Ready for download (MP3)";
+                downloadLink.href = data.downloadUrl;
+                downloadLink.setAttribute('download', data.filename || 'audio.mp3');
                 resultBox.style.display = 'block';
                 
                 await incrementGlobalCounter();
