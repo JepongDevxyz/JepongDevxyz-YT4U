@@ -455,6 +455,7 @@
         const urlInput = document.getElementById('url');
         const counterValue = document.getElementById('counterValue');
 
+        // Toast Notification
         const toast = document.getElementById('toast');
         const toastText = document.getElementById('toastText');
         const toastCloseBtn = document.getElementById('toastCloseBtn');
@@ -474,6 +475,7 @@
             toast.classList.remove('show');
         });
 
+        // Global Real-time Counter Functions
         async function fetchGlobalCount() {
             try {
                 const res = await fetch('/api/counter');
@@ -498,9 +500,11 @@
             }
         }
 
+        // I-fetch ang bilang sa unang bukas ng page at mag-sync bawat 3 segundo
         fetchGlobalCount();
         setInterval(fetchGlobalCount, 3000);
 
+        // Custom Format Dropdown Logic
         const customDropdown = document.getElementById('customDropdown');
         const dropdownTrigger = document.getElementById('dropdownTrigger');
         const selectedFormatText = document.getElementById('selectedFormatText');
@@ -563,10 +567,17 @@
             try {
                 const videoId = extractYouTubeID(videoUrl);
                 
-                const res = await fetch(`/api/download?url=${encodeURIComponent(videoUrl)}&format=${selectedFormat}`);
-                const data = await res.json();
-                
-                if (!res.ok) throw new Error(data.error || 'Conversion failed.');
+                if (selectedFormat === 'mp3') {
+                    downloadLink.href = `/api/download?url=${encodeURIComponent(videoUrl)}&format=mp3`;
+                    videoTitle.innerText = "Audio Ready (Cleaned MP3)";
+                } else {
+                    const res = await fetch(`/api/download?url=${encodeURIComponent(videoUrl)}&format=mp4`);
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Conversion failed.');
+                    
+                    videoTitle.innerText = data.title;
+                    downloadLink.href = data.downloadUrl;
+                }
                 
                 clearInterval(interval);
                 statusBox.style.display = 'none';
@@ -577,11 +588,10 @@
                     videoPreviewContainer.innerHTML = '';
                 }
 
-                videoTitle.innerText = `Ready for download (${selectedFormat.toUpperCase()})`;
-                downloadLink.href = data.downloadUrl;
                 downloadLink.innerText = `Download ${selectedFormat.toUpperCase()}`;
                 resultBox.style.display = 'block';
                 
+                // Magdaragdag ng +1 sa global counter
                 await incrementGlobalCounter();
 
             } catch (err) {
