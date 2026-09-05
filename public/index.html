@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -26,7 +26,7 @@
         header h1 {
             font-size: 20px;
             margin: 0;
-            color: #22c55e;
+            color: #00a2ff;
         }
         .container {
             flex: 1;
@@ -69,7 +69,7 @@
             outline: none;
         }
         input[type="text"]:focus {
-            border-color: #22c55e;
+            border-color: #00a2ff;
         }
         select {
             padding: 12px 10px;
@@ -81,7 +81,7 @@
             cursor: pointer;
         }
         button.convert-btn {
-            background-color: #22c55e;
+            background-color: #00a2ff;
             color: white;
             border: none;
             padding: 12px 25px;
@@ -93,19 +93,52 @@
             transition: background 0.2s;
         }
         button.convert-btn:hover {
-            background-color: #16a34a;
+            background-color: #0086d6;
         }
-        #status {
+        #statusBox {
             margin-top: 15px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fafafa;
             font-size: 14px;
-            color: #555;
+            color: #333;
+        }
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ccc;
+            border-top: 2px solid #00a2ff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         .result-box {
-            margin-top: 20px;
+            margin-top: 15px;
             display: none;
+            text-align: left;
             border-top: 1px solid #eee;
             padding-top: 15px;
-            text-align: left;
+        }
+        .video-preview {
+            width: 100%;
+            height: 180px;
+            background: #000;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .video-preview iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
         }
         .result-box p {
             font-size: 13px;
@@ -117,18 +150,18 @@
         .btn-download-action {
             display: block;
             width: 100%;
-            background-color: #22c55e;
+            background-color: #00a2ff;
             color: white;
             text-align: center;
             padding: 12px;
             border-radius: 4px;
             text-decoration: none;
             font-weight: bold;
-            margin-top: 8px;
             box-sizing: border-box;
+            margin-bottom: 8px;
         }
         .btn-download-action:hover {
-            background-color: #16a34a;
+            background-color: #0086d6;
         }
         footer {
             text-align: center;
@@ -143,28 +176,33 @@
 <body>
 
     <header>
-        <h1>YTMP3</h1>
+        <h1 style="display: flex; align-items: center; gap: 5px;"><span style="color: #fff; background: #00a2ff; padding: 2px 6px; border-radius: 3px;">YT</span>MP3</h1>
+        <div style="font-size: 14px; color: #aaa;">Home &nbsp; FAQ &nbsp; Bookmarklet</div>
     </header>
 
     <div class="container">
         <h2>YouTube to MP3 Converter</h2>
-        <p class="subtitle">Convert and download YouTube videos in MP3 or MP4 with high quality</p>
+        <p class="subtitle">YTMP3 is an online YouTube to mp3 converter that lets you convert YouTube videos into MP3 or MP4 files and download them for free.</p>
         
         <div class="converter-box">
             <form id="downloadForm">
                 <div class="input-group">
-                    <input type="text" id="url" placeholder="Paste YouTube link here..." required>
+                    <input type="text" id="url" placeholder="Paste your YouTube link" required>
                     <select id="formatSelect">
                         <option value="mp3">MP3</option>
                         <option value="mp4">MP4</option>
                     </select>
                 </div>
-                <button type="submit" class="convert-btn" id="submitBtn">Convert</button>
+                <button type="submit" class="convert-btn" id="submitBtn">Convert <span id="btnFormatText">MP3</span></button>
             </form>
             
-            <div id="status"></div>
+            <div id="statusBox">
+                <div class="spinner"></div>
+                <span id="statusText">preparing conversion</span>
+            </div>
 
             <div class="result-box" id="resultBox">
+                <div class="video-preview" id="videoPreviewContainer"></div>
                 <p id="videoTitle"></p>
                 <a id="downloadLink" href="#" class="btn-download-action" target="_blank">Download</a>
             </div>
@@ -172,41 +210,83 @@
     </div>
 
     <footer>
-        &copy; 2026 JepongDevxyz. All rights reserved.
+        &copy; 2026 YTMP3. All rights reserved.
     </footer>
 
     <script>
         const form = document.getElementById('downloadForm');
-        const statusDiv = document.getElementById('status');
+        const statusBox = document.getElementById('statusBox');
+        const statusText = document.getElementById('statusText');
         const submitBtn = document.getElementById('submitBtn');
         const resultBox = document.getElementById('resultBox');
         const videoTitle = document.getElementById('videoTitle');
         const downloadLink = document.getElementById('downloadLink');
         const formatSelect = document.getElementById('formatSelect');
+        const btnFormatText = document.getElementById('btnFormatText');
+        const videoPreviewContainer = document.getElementById('videoPreviewContainer');
+
+        formatSelect.addEventListener('change', () => {
+            btnFormatText.innerText = formatSelect.value.toUpperCase();
+        });
+
+        function extractYouTubeID(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const videoUrl = document.getElementById('url').value;
             const selectedFormat = formatSelect.value;
             
-            statusDiv.innerText = "Loading...";
             submitBtn.disabled = true;
             resultBox.style.display = 'none';
+            statusBox.style.display = 'flex';
+
+            const steps = [
+                "preparing conversion",
+                "initializing conversion",
+                "checking video",
+                "extracting video",
+                "converting video"
+            ];
+
+            let stepIdx = 0;
+            const interval = setInterval(() => {
+                if (stepIdx < steps.length) {
+                    statusText.innerText = steps[stepIdx];
+                    stepIdx++;
+                }
+            }, 400);
 
             try {
                 const res = await fetch(`/api/download?url=${encodeURIComponent(videoUrl)}&format=${selectedFormat}`);
                 const data = await res.json();
+                
+                clearInterval(interval);
+
                 if (!res.ok) throw new Error(data.error || 'Conversion failed.');
 
+                statusBox.style.display = 'none';
                 videoTitle.innerText = data.title;
+                
+                // I-embed ang YouTube Video Preview gamit ang Video ID
+                const videoId = extractYouTubeID(videoUrl);
+                if (videoId) {
+                    videoPreviewContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>`;
+                } else {
+                    videoPreviewContainer.innerHTML = '';
+                }
+
                 downloadLink.href = data.downloadUrl;
                 downloadLink.setAttribute('download', data.filename);
                 downloadLink.innerText = `Download ${selectedFormat.toUpperCase()}`;
-                
-                statusDiv.innerText = "";
                 resultBox.style.display = 'block';
             } catch (err) {
-                statusDiv.innerText = "Error: " + err.message;
+                clearInterval(interval);
+                statusBox.style.display = 'none';
+                alert("Error: " + err.message);
             } finally {
                 submitBtn.disabled = false;
             }
