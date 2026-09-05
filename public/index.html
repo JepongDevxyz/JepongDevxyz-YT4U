@@ -1,100 +1,214 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JepongDevxyz - YT4U Downloader</title>
+    <title>YouTube to MP3 Converter</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: #1e293b; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 400px; text-align: center; }
-        input { width: 90%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; }
-        button { background: #ef4444; color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        button:hover { opacity: 0.9; }
-        #status { margin-top: 15px; font-size: 14px; color: #94a3b8; }
-        .result-box { margin-top: 15px; display: none; text-align: left; }
-        .result-box button { display: block; width: 100%; margin-top: 8px; padding: 12px; border-radius: 6px; border: none; font-weight: bold; color: white; cursor: pointer; text-align: center; }
-        .dl-mp3 { background: #ef4444; }
-        .dl-mp4 { background: #3b82f6; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f5f7;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            color: #333;
+        }
+        header {
+            background-color: #1b1b1b;
+            color: #fff;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 {
+            font-size: 20px;
+            margin: 0;
+            color: #22c55e;
+        }
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+        h2 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: #111;
+        }
+        p.subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+        .converter-box {
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 550px;
+        }
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 15px;
+            outline: none;
+        }
+        input[type="text"]:focus {
+            border-color: #22c55e;
+        }
+        select {
+            padding: 12px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+        }
+        button.convert-btn {
+            background-color: #22c55e;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        button.convert-btn:hover {
+            background-color: #16a34a;
+        }
+        #status {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #555;
+        }
+        .result-box {
+            margin-top: 20px;
+            display: none;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            text-align: left;
+        }
+        .result-box p {
+            font-size: 13px;
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 10px;
+            word-break: break-all;
+        }
+        .btn-download-action {
+            display: block;
+            width: 100%;
+            background-color: #22c55e;
+            color: white;
+            text-align: center;
+            padding: 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 8px;
+            box-sizing: border-box;
+        }
+        .btn-download-action:hover {
+            background-color: #16a34a;
+        }
+        footer {
+            text-align: center;
+            padding: 15px;
+            font-size: 12px;
+            color: #888;
+            background: #fff;
+            border-top: 1px solid #eaeaea;
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>YT4U Downloader</h2>
-        <form id="downloadForm">
-            <input type="text" id="url" placeholder="I-paste ang YouTube URL dito..." required>
-            <button type="submit" id="submitBtn">Hanapin ang Links</button>
-        </form>
-        <div id="status"></div>
-        <div class="result-box" id="resultBox">
-            <h4 id="videoTitle" style="font-size: 13px; margin-bottom: 10px; color: #cbd5e1; text-align: center;"></h4>
-            <button id="mp3Btn" class="dl-mp3">Download .mp3</button>
-            <button id="mp4Btn" class="dl-mp4">Download .mp4</button>
+
+    <header>
+        <h1>YTMP3</h1>
+    </header>
+
+    <div class="container">
+        <h2>YouTube to MP3 Converter</h2>
+        <p class="subtitle">Convert and download YouTube videos in MP3 or MP4 with high quality</p>
+        
+        <div class="converter-box">
+            <form id="downloadForm">
+                <div class="input-group">
+                    <input type="text" id="url" placeholder="Paste YouTube link here..." required>
+                    <select id="formatSelect">
+                        <option value="mp3">MP3</option>
+                        <option value="mp4">MP4</option>
+                    </select>
+                </div>
+                <button type="submit" class="convert-btn" id="submitBtn">Convert</button>
+            </form>
+            
+            <div id="status"></div>
+
+            <div class="result-box" id="resultBox">
+                <p id="videoTitle"></p>
+                <a id="downloadLink" href="#" class="btn-download-action" target="_blank">Download</a>
+            </div>
         </div>
     </div>
+
+    <footer>
+        &copy; 2026 JepongDevxyz. All rights reserved.
+    </footer>
+
     <script>
         const form = document.getElementById('downloadForm');
         const statusDiv = document.getElementById('status');
         const submitBtn = document.getElementById('submitBtn');
         const resultBox = document.getElementById('resultBox');
         const videoTitle = document.getElementById('videoTitle');
-        const mp3Btn = document.getElementById('mp3Btn');
-        const mp4Btn = document.getElementById('mp4Btn');
-
-        let downloadedData = null;
+        const downloadLink = document.getElementById('downloadLink');
+        const formatSelect = document.getElementById('formatSelect');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const videoUrl = document.getElementById('url').value;
-            statusDiv.innerText = "Hinahanap ang media links...";
+            const selectedFormat = formatSelect.value;
+            
+            statusDiv.innerText = "Loading...";
             submitBtn.disabled = true;
             resultBox.style.display = 'none';
 
             try {
-                const res = await fetch(`/api/download?url=${encodeURIComponent(videoUrl)}`);
+                const res = await fetch(`/api/download?url=${encodeURIComponent(videoUrl)}&format=${selectedFormat}`);
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'May nangyaring error.');
+                if (!res.ok) throw new Error(data.error || 'Conversion failed.');
 
-                downloadedData = data;
                 videoTitle.innerText = data.title;
-                statusDiv.innerText = "Tagumpay! Piliin ang format sa ibaba:";
+                downloadLink.href = data.downloadUrl;
+                downloadLink.setAttribute('download', data.filename);
+                downloadLink.innerText = `Download ${selectedFormat.toUpperCase()}`;
+                
+                statusDiv.innerText = "";
                 resultBox.style.display = 'block';
             } catch (err) {
-                statusDiv.innerText = "Nagka-error: " + err.message;
+                statusDiv.innerText = "Error: " + err.message;
             } finally {
                 submitBtn.disabled = false;
-            }
-        });
-
-        async function downloadFile(fileUrl, filename) {
-            statusDiv.innerText = `Dina-download ang ${filename}... Sandali lang.`;
-            try {
-                const response = await fetch(fileUrl);
-                const blob = await response.blob();
-                const blobUrl = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = blobUrl;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(blobUrl);
-                statusDiv.innerText = `Tagumpay na na-download ang ${filename}!`;
-            } catch (err) {
-                // Fallback kung sakaling i-block ng CORS, direktang buksan sa bagong tab
-                window.open(fileUrl, '_blank');
-                statusDiv.innerText = "Binuksan ang link sa bagong tab para ma-save.";
-            }
-        }
-
-        mp3Btn.addEventListener('click', () => {
-            if (downloadedData && downloadedData.mp3Url) {
-                downloadFile(downloadedData.mp3Url, downloadedData.mp3Filename);
-            }
-        });
-
-        mp4Btn.addEventListener('click', () => {
-            if (downloadedData && downloadedData.mp4Url) {
-                downloadFile(downloadedData.mp4Url, downloadedData.mp4Filename);
             }
         });
     </script>
