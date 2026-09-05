@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JepongDevxyz - YT4U</title>
+    <title>Jepong Devxyz- YT4U</title>
     <style>
         :root {
             --bg-color: #f4f5f7;
@@ -15,8 +15,6 @@
             --status-bg: #fafafa;
             --footer-bg: #ffffff;
             --footer-border: #eaeaea;
-            --dropdown-bg: #ffffff;
-            --dropdown-hover: #f0f0f0;
             --primary: #00a2ff;
             --primary-hover: #0086d6;
             --shadow: rgba(0, 0, 0, 0.08);
@@ -35,8 +33,6 @@
                 --status-bg: #252525;
                 --footer-bg: #1e1e1e;
                 --footer-border: #2a2a2a;
-                --dropdown-bg: #2a2a2a;
-                --dropdown-hover: #383838;
                 --shadow: rgba(0, 0, 0, 0.4);
                 --toast-bg: #2a2a2a;
                 --toast-text: #00a2ff;
@@ -99,7 +95,6 @@
             display: flex;
             gap: 8px;
             margin-bottom: 15px;
-            position: relative;
         }
 
         input[type="text"] {
@@ -117,84 +112,6 @@
 
         input[type="text"]:focus {
             border-color: var(--primary);
-        }
-
-        .custom-dropdown {
-            position: relative;
-            user-select: none;
-        }
-
-        .dropdown-trigger {
-            padding: 12px 16px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            background: var(--input-bg);
-            color: var(--text-main);
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            height: 100%;
-            transition: border-color 0.2s, background 0.3s;
-        }
-
-        .dropdown-trigger:hover {
-            border-color: var(--primary);
-        }
-
-        .dropdown-arrow {
-            font-size: 10px;
-            transition: transform 0.2s ease;
-        }
-
-        .custom-dropdown.active .dropdown-arrow {
-            transform: rotate(180deg);
-        }
-
-        .dropdown-menu {
-            position: absolute;
-            top: calc(100% + 6px);
-            right: 0;
-            width: 100px;
-            background: var(--dropdown-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            box-shadow: 0 8px 24px var(--shadow);
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-            z-index: 100;
-            opacity: 0;
-            transform: translateY(-8px);
-            transition: opacity 0.2s ease, transform 0.2s ease;
-        }
-
-        .custom-dropdown.active .dropdown-menu {
-            display: flex;
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .dropdown-option {
-            padding: 10px 14px;
-            font-size: 14px;
-            font-weight: bold;
-            color: var(--text-main);
-            cursor: pointer;
-            text-align: left;
-            transition: background 0.15s;
-        }
-
-        .dropdown-option:hover {
-            background: var(--dropdown-hover);
-            color: var(--primary);
-        }
-
-        .dropdown-option.selected {
-            color: var(--primary);
-            background: var(--dropdown-hover);
         }
 
         button.convert-btn {
@@ -310,10 +227,6 @@
             transition: background 0.2s;
         }
 
-        .btn-another-action:hover {
-            background-color: var(--dropdown-hover);
-        }
-
         .counter-badge {
             margin-top: 20px;
             font-size: 13px;
@@ -368,11 +281,6 @@
             cursor: pointer;
             opacity: 0.7;
             padding: 0 0 0 8px;
-            line-height: 1;
-        }
-
-        .toast-close:hover {
-            opacity: 1;
         }
 
         footer {
@@ -383,7 +291,6 @@
             background: var(--footer-bg);
             border-top: 1px solid var(--footer-border);
             width: 100%;
-            transition: background 0.3s;
         }
     </style>
 </head>
@@ -391,25 +298,14 @@
 
     <div class="container">
         <h2>YT4U - YouTube Downloader</h2>
-        <p class="subtitle">YT4U is an online tool that lets you convert YouTube videos into MP3 or MP4 files and download them for free.</p>
+        <p class="subtitle">YT4U is an online tool that lets you convert YouTube videos into MP3 files and download them for free.</p>
         
         <div class="converter-box">
             <form id="downloadForm">
                 <div class="input-group">
                     <input type="text" id="url" placeholder="YouTube Link" required>
-                    
-                    <div class="custom-dropdown" id="customDropdown">
-                        <div class="dropdown-trigger" id="dropdownTrigger">
-                            <span id="selectedFormatText">MP3</span>
-                            <span class="dropdown-arrow">▼</span>
-                        </div>
-                        <div class="dropdown-menu">
-                            <div class="dropdown-option selected" data-value="mp3">MP3</div>
-                            <div class="dropdown-option" data-value="mp4">MP4</div>
-                        </div>
-                    </div>
                 </div>
-                <button type="submit" class="convert-btn" id="submitBtn">Generate <span id="btnFormatText">MP3</span></button>
+                <button type="submit" class="convert-btn" id="submitBtn">Generate MP3</button>
             </form>
             
             <div id="statusBox">
@@ -421,7 +317,7 @@
                 <div class="video-preview" id="videoPreviewContainer"></div>
                 <p id="videoTitle"></p>
                 <div class="action-buttons">
-                    <a id="downloadLink" href="#" class="btn-download-action" target="_blank" rel="noopener noreferrer">Download</a>
+                    <a id="downloadLink" href="#" class="btn-download-action" download>Download MP3</a>
                     <button id="generateAnotherBtn" class="btn-another-action">Generate Another</button>
                 </div>
             </div>
@@ -449,13 +345,11 @@
         const resultBox = document.getElementById('resultBox');
         const videoTitle = document.getElementById('videoTitle');
         const downloadLink = document.getElementById('downloadLink');
-        const btnFormatText = document.getElementById('btnFormatText');
         const generateAnotherBtn = document.getElementById('generateAnotherBtn');
         const videoPreviewContainer = document.getElementById('videoPreviewContainer');
         const urlInput = document.getElementById('url');
         const counterValue = document.getElementById('counterValue');
 
-        // Toast Notification
         const toast = document.getElementById('toast');
         const toastText = document.getElementById('toastText');
         const toastCloseBtn = document.getElementById('toastCloseBtn');
@@ -475,7 +369,6 @@
             toast.classList.remove('show');
         });
 
-        // Global Real-time Counter Functions
         async function fetchGlobalCount() {
             try {
                 const res = await fetch('/api/counter');
@@ -500,39 +393,8 @@
             }
         }
 
-        // I-fetch ang bilang sa unang bukas ng page at mag-sync bawat 3 segundo
         fetchGlobalCount();
         setInterval(fetchGlobalCount, 3000);
-
-        // Custom Format Dropdown Logic
-        const customDropdown = document.getElementById('customDropdown');
-        const dropdownTrigger = document.getElementById('dropdownTrigger');
-        const selectedFormatText = document.getElementById('selectedFormatText');
-        const dropdownOptions = document.querySelectorAll('.dropdown-option');
-        let selectedFormat = 'mp3';
-
-        dropdownTrigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            customDropdown.classList.toggle('active');
-        });
-
-        dropdownOptions.forEach(option => {
-            option.addEventListener('click', (e) => {
-                e.stopPropagation();
-                dropdownOptions.forEach(opt => opt.classList.remove('selected'));
-                option.classList.add('selected');
-                
-                selectedFormat = option.getAttribute('data-value');
-                selectedFormatText.innerText = selectedFormat.toUpperCase();
-                btnFormatText.innerText = selectedFormat.toUpperCase();
-                
-                customDropdown.classList.remove('active');
-            });
-        });
-
-        document.addEventListener('click', () => {
-            customDropdown.classList.remove('active');
-        });
 
         function extractYouTubeID(url) {
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -566,18 +428,7 @@
 
             try {
                 const videoId = extractYouTubeID(videoUrl);
-                
-                if (selectedFormat === 'mp3') {
-                    downloadLink.href = `/api/download?url=${encodeURIComponent(videoUrl)}&format=mp3`;
-                    videoTitle.innerText = "Audio Ready (Cleaned MP3)";
-                } else {
-                    const res = await fetch(`/api/download?url=${encodeURIComponent(videoUrl)}&format=mp4`);
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.error || 'Conversion failed.');
-                    
-                    videoTitle.innerText = data.title;
-                    downloadLink.href = data.downloadUrl;
-                }
+                const downloadApiUrl = `/api/download?url=${encodeURIComponent(videoUrl)}`;
                 
                 clearInterval(interval);
                 statusBox.style.display = 'none';
@@ -588,10 +439,10 @@
                     videoPreviewContainer.innerHTML = '';
                 }
 
-                downloadLink.innerText = `Download ${selectedFormat.toUpperCase()}`;
+                videoTitle.innerText = `Ready for download (MP3)`;
+                downloadLink.href = downloadApiUrl;
                 resultBox.style.display = 'block';
                 
-                // Magdaragdag ng +1 sa global counter
                 await incrementGlobalCounter();
 
             } catch (err) {
