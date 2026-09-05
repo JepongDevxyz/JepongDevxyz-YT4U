@@ -14,8 +14,15 @@ export default async function handler(req, res) {
     }
 
     try {
-        const apiKey = process.env.RAPIDAPI_KEY || 'a849dc41f8msh50d5879d4213394p19931cjsn054e17ccba8c';
+        const apiKey = process.env.RAPIDAPI_KEY;
 
+        if (!apiKey) {
+            throw new Error("Missing RapidAPI Key in Environment Variables.");
+        }
+
+        const requestedFormat = (format && format.toLowerCase() === 'mp4') ? 'mp4' : 'mp3';
+
+        // Fetching from RapidAPI Service
         const apiResponse = await fetch(`https://youtube-mp36.p.rapidapi.com/dl?id=${videoId}`, {
             method: 'GET',
             headers: {
@@ -33,7 +40,7 @@ export default async function handler(req, res) {
         return res.status(200).json({
             title: data.title,
             downloadUrl: data.link,
-            filename: `${data.title}.${format || 'mp3'}`
+            filename: `${data.title}.${requestedFormat}`
         });
 
     } catch (err) {
