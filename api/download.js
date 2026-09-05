@@ -1,22 +1,63 @@
-const ytdl = require('@distube/ytdl-core');
+const https = require('https');
 
 module.exports = async (req, res) => {
     const videoURL = req.query.url;
-    if (!videoURL || !ytdl.validateURL(videoURL)) {
-        return res.status(400).json({ error: 'Invalid o walang nilagay na YouTube URL.' });
+    if (!videoURL) {
+        return res.status(400).json({ error: 'Walang nilagay na YouTube URL.' });
     }
+
     try {
-        const info = await ytdl.getInfo(videoURL);
-        const title = info.videoDetails.title.replace(/[^\w\s]/gi, '').trim();
-        const audioFormat = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
-        const videoFormat = ytdl.chooseFormat(info.formats, { quality: 'highest', filter: 'audioandvideo' });
-        return res.status(200).json({
-            title: title,
-            mp3Url: audioFormat ? audioFormat.url : null,
-            mp4Url: videoFormat ? videoFormat.url : null
+        // Gumamit tayo ng maaasahang public cobalt API instance para sa Vercel deployment
+        const data = JSON.stringify({
+            url: videoURL,
+            vQuality: "720",
+            filenamePattern: "classic"
         });
+
+        const options = {
+            hostname: 'co.wuk.sh',
+            path: '/api/json',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        };
+
+        const apiReq = https.request(options, (apiRes) => {
+            let body = '';
+            apiRes.on('data', (chunk) => { body += chunk; });
+            apiRes.on('end', () => {
+                try {
+                    const result = JSON.parse(body);
+                    if (result.status === 'error' || !result.url) {
+                        return res.status(500).json({ error: result.text || 'Hindi ma-process ang video.' });
+                    }
+
+                    const cleanTitle = (result.filename || 'youtube_media').replace(/[^\w\s]/gi, '').trim();
+
+                    return res.status(200).json({
+                        title: cleanTitle,
+                        mp3Url: result.url, // Kung audio ang gusto o direct download link
+                        mp4Url: result.url,
+                        mp3Filename: `${cleanTitle}.mp3`,
+                        mp4Filename: `${cleanTitle}.mp4`
+                    });
+                } catch (e) {
+                    return res.status(500).json({ error: 'Nagka-error sa pag-parse ng data.' });
+                }
+            });
+        });
+
+        apiReq.on('error', (e) => {
+            return res.status(500).json({ error: 'Nabigo ang koneksyon sa downloader service.' });
+        });
+
+        apiReq.write(data);
+        apiReq.end();
+
     } catch (error) {
         console.error('API Error:', error);
-        return res.status(500).json({ error: 'Hindi ma-process ang YouTube link.' });
+        return res.status(500).json({ error: 'Server error.' });
     }
 };
