@@ -1,108 +1,51 @@
-module.exports = async (req, res) => {
-    // Payagan ang Cross-Origin requests
+export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
 
-    const videoURL = req.query.url;
-    const format = req.query.format || 'mp3';
+    const { url, format } = req.query;
 
-    if (!videoURL) {
-        return res.status(400).json({ error: 'Walang nilagay na YouTube URL.' });
+    if (!url) {
+        return res.status(400).json({ error: "Maglagay ng valid na YouTube URL." });
     }
 
-    // Extract YouTube Video ID
-    const extractVideoId = (url) => {
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-        const match = url.match(regExp);
-        return (match && match[2].length === 11) ? match[2] : null;
-    };
-
-    const videoId = extractVideoId(videoURL);
+    const videoId = extractYouTubeID(url);
     if (!videoId) {
-        return res.status(400).json({ error: 'Hindi valid ang YouTube URL.' });
+        return res.status(400).json({ error: "Invalid YouTube URL format." });
     }
 
-    const cleanUrl = `https://www.youtube.com/watch?v=${videoId}`;
-
-    // --- METHOD 1: COBALT API ---
     try {
-        const payload = {
-            url: cleanUrl,
-            downloadMode: format === 'mp4' ? 'auto' : 'audio',
-            audioFormat: 'mp3',
-            youtubeVideoContainer: 'mp4'
-        };
+        const apiKey = process.env.RAPIDAPI_KEY || 'a849dc41f8msh50d5879d4213394p19931cjsn054e17ccba8c';
 
-        const response = await fetch('https://cobalt-api.kwiatek.xyz/', {
-            method: 'POST',
+        const apiResponse = await fetch(`https://youtube-mp36.p.rapidapi.com/dl?id=${videoId}`, {
+            method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-            },
-            body: JSON.stringify(payload)
+                'x-rapidapi-key': apiKey,
+                'x-rapidapi-host': 'youtube-mp36.p.rapidapi.com'
+            }
         });
 
-        if (response.ok) {
-            const result = await response.json();
-            const downloadUrl = result.url || (result.picker && result.picker[0] ? result.picker[0].url : null);
+        const data = await apiResponse.json();
 
-            if (downloadUrl) {
-                const cleanTitle = (result.filename || `youtube_${videoId}`).replace(/[^\w\s]/gi, '').trim();
-                return res.status(200).json({
-                    success: true,
-                    title: cleanTitle || 'YouTube Media',
-                    downloadUrl: downloadUrl,
-                    filename: `${cleanTitle || 'media'}.${format}`
-                });
-            }
+        if (data.status !== "ok") {
+            throw new Error(data.msg || "Hindi ma-extract ang video details.");
         }
-    } catch (e) {
-        console.log("Cobalt primary endpoint failed, switching to Invidious Fallback...");
+
+        return res.status(200).json({
+            title: data.title,
+            downloadUrl: data.link,
+            filename: `${data.title}.${format || 'mp3'}`
+        });
+
+    } catch (err) {
+        console.error("API Error:", err);
+        return res.status(500).json({ 
+            error: "Hindi ma-process ang video ngayon. Subukan ulit mamaya." 
+        });
     }
+}
 
-    // --- METHOD 2: INVIDIOUS API FALLBACK ---
-    try {
-        const invidiousInstances = [
-            'https://inv.nadeko.net',
-            'https://invidious.nerdvpn.de',
-            'https://invidious.drgns.space'
-        ];
-
-        for (const instance of invidiousInstances) {
-            try {
-                const invRes = await fetch(`${instance}/api/v1/videos/${videoId}`);
-                if (invRes.ok) {
-                    const data = await invRes.json();
-                    let streamUrl = null;
-
-                    if (format === 'mp3') {
-                        // Kumuha ng Audio Format
-                        const audioFormat = data.adaptiveFormats.find(f => f.type && f.type.includes('audio'));
-                        if (audioFormat) streamUrl = audioFormat.url;
-                    } else {
-                        // Kumuha ng Combined MP4 Video Format
-                        const videoFormat = data.formatStreams.find(f => f.container === 'mp4') || data.formatStreams[0];
-                        if (videoFormat) streamUrl = videoFormat.url;
-                    }
-
-                    if (streamUrl) {
-                        const cleanTitle = data.title.replace(/[^\w\s]/gi, '').trim();
-                        return res.status(200).json({
-                            success: true,
-                            title: cleanTitle || 'YouTube Media',
-                            downloadUrl: streamUrl,
-                            filename: `${cleanTitle || 'media'}.${format}`
-                        });
-                    }
-                }
-            } catch (err) {
-                continue;
-            }
-        }
-    } catch (error) {
-        console.error('Fallback Error:', error);
-    }
-
-    return res.status(500).json({ error: 'Hindi ma-process ang video ngayon. Subukan ulit mamaya.' });
-};
+function extractYouTubeID(url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+}
