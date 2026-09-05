@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JepongDevxyz - YT4U</title>
+    <title>YouTube Downloader - YT4U</title>
     <style>
         :root {
             --bg-color: #f4f5f7;
@@ -455,7 +455,6 @@
         const urlInput = document.getElementById('url');
         const counterValue = document.getElementById('counterValue');
 
-        // Toast Logic
         const toast = document.getElementById('toast');
         const toastText = document.getElementById('toastText');
         const toastCloseBtn = document.getElementById('toastCloseBtn');
@@ -475,7 +474,6 @@
             toast.classList.remove('show');
         });
 
-        // Counter
         let count = parseInt(localStorage.getItem('yt4u_gen_count') || '0', 10);
         counterValue.innerText = count;
 
@@ -485,7 +483,6 @@
             counterValue.innerText = count;
         }
 
-        // Custom Dropdown
         const customDropdown = document.getElementById('customDropdown');
         const dropdownTrigger = document.getElementById('dropdownTrigger');
         const selectedFormatText = document.getElementById('selectedFormatText');
@@ -549,23 +546,22 @@
                 const videoId = extractYouTubeID(videoUrl);
                 
                 if (selectedFormat === 'mp3') {
-                    // Direkta sa ating Node-ID3 clean buffer endpoint
+                    // Direct link sa ating MP3 stripping backend API
                     downloadLink.href = `/api/download?url=${encodeURIComponent(videoUrl)}&format=mp3`;
-                    videoTitle.innerText = "Audio Ready (Cleaned Metadata)";
+                    videoTitle.innerText = "Audio Ready (Cleaned MP3)";
                 } else {
-                    // Fetch MP4 JSON response
+                    // I-fetch muna ang MP4 video details mula sa API
                     const res = await fetch(`/api/download?url=${encodeURIComponent(videoUrl)}&format=mp4`);
                     const data = await res.json();
                     if (!res.ok) throw new Error(data.error || 'Conversion failed.');
                     
                     videoTitle.innerText = data.title;
-                    downloadLink.href = data.downloadUrl;
+                    downloadLink.href = data.downloadUrl; // Direct link sa RapidAPI MP4 file
                 }
                 
                 clearInterval(interval);
                 statusBox.style.display = 'none';
 
-                // Video Preview Frame
                 if (videoId) {
                     videoPreviewContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>`;
                 } else {
