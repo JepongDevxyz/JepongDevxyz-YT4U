@@ -455,7 +455,6 @@
         const urlInput = document.getElementById('url');
         const counterValue = document.getElementById('counterValue');
 
-        // Toast Notification
         const toast = document.getElementById('toast');
         const toastText = document.getElementById('toastText');
         const toastCloseBtn = document.getElementById('toastCloseBtn');
@@ -475,7 +474,6 @@
             toast.classList.remove('show');
         });
 
-        // Real-time Global Counter Functions
         async function fetchGlobalCount() {
             try {
                 const res = await fetch('/api/counter');
@@ -503,7 +501,6 @@
         fetchGlobalCount();
         setInterval(fetchGlobalCount, 3000);
 
-        // Custom Dropdown Logic
         const customDropdown = document.getElementById('customDropdown');
         const dropdownTrigger = document.getElementById('dropdownTrigger');
         const selectedFormatText = document.getElementById('selectedFormatText');
@@ -566,18 +563,10 @@
             try {
                 const videoId = extractYouTubeID(videoUrl);
                 
-                if (selectedFormat === 'mp3') {
-                    downloadLink.href = `/api/download?url=${encodeURIComponent(videoUrl)}&format=mp3`;
-                    videoTitle.innerText = "Audio Ready (Cleaned MP3)";
-                    downloadLink.removeAttribute('download');
-                } else {
-                    const res = await fetch(`/api/download?url=${encodeURIComponent(videoUrl)}&format=mp4`);
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.error || 'Conversion failed.');
-                    
-                    videoTitle.innerText = data.title;
-                    downloadLink.href = data.downloadUrl;
-                }
+                const res = await fetch(`/api/download?url=${encodeURIComponent(videoUrl)}&format=${selectedFormat}`);
+                const data = await res.json();
+                
+                if (!res.ok) throw new Error(data.error || 'Conversion failed.');
                 
                 clearInterval(interval);
                 statusBox.style.display = 'none';
@@ -588,6 +577,8 @@
                     videoPreviewContainer.innerHTML = '';
                 }
 
+                videoTitle.innerText = `Ready for download (${selectedFormat.toUpperCase()})`;
+                downloadLink.href = data.downloadUrl;
                 downloadLink.innerText = `Download ${selectedFormat.toUpperCase()}`;
                 resultBox.style.display = 'block';
                 
