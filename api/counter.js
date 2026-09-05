@@ -2,33 +2,29 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
 
-    const BUCKET_KEY = 'jepongdevxyz_yt4u_counter';
-    const KVDB_URL = `https://kvdb.io/4T8m4e1uK9uS7yX2L2m1A1/${BUCKET_KEY}`;
+    // Permanent Unique Key para sa YT4U
+    const NAMESPACE = 'yt4u_jepongdevxyz_2026';
+    const KEY = 'total_generated_count';
 
     try {
         if (req.method === 'POST') {
-            const getRes = await fetch(KVDB_URL);
-            let currentCount = 0;
-            if (getRes.ok) {
-                const text = await getRes.text();
-                currentCount = parseInt(text, 10) || 0;
-            }
-            
-            const newCount = currentCount + 1;
-            await fetch(KVDB_URL, {
-                method: 'POST',
-                body: newCount.toString()
-            });
-
-            return res.status(200).json({ count: newCount });
+            // Permanently dagdagan ng +1 sa CountAPI
+            const postRes = await fetch(`https://api.countapi.xyz/hit/${NAMESPACE}/${KEY}`);
+            const data = await postRes.json();
+            return res.status(200).json({ count: data.value || 0 });
         } else {
-            const getRes = await fetch(KVDB_URL);
-            let currentCount = 0;
-            if (getRes.ok) {
-                const text = await getRes.text();
-                currentCount = parseInt(text, 10) || 0;
+            // Kunin ang permanent count
+            const getRes = await fetch(`https://api.countapi.xyz/get/${NAMESPACE}/${KEY}`);
+            const data = await getRes.json();
+            
+            // Kapag bago pa ang key, i-create sa 0
+            if (data.value === undefined) {
+                const createRes = await fetch(`https://api.countapi.xyz/create?namespace=${NAMESPACE}&key=${KEY}&value=0`);
+                const createData = await createRes.json();
+                return res.status(200).json({ count: createData.value || 0 });
             }
-            return res.status(200).json({ count: currentCount });
+
+            return res.status(200).json({ count: data.value });
         }
     } catch (err) {
         console.error("Counter Error:", err);
