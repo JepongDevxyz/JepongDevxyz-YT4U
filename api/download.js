@@ -14,7 +14,6 @@ export default async function handler(req, res) {
     }
 
     try {
-        // Kukunin nito ang Key mula sa Vercel Environment Variables
         const apiKey = process.env.RAPIDAPI_KEY;
 
         if (!apiKey) {
