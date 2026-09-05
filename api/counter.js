@@ -2,29 +2,36 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
 
-    // Permanent Unique Key para sa YT4U
-    const NAMESPACE = 'yt4u_jepongdevxyz_2026';
-    const KEY = 'total_generated_count';
+    const BUCKET_KEY = 'jepongdevxyz_yt4u_counter';
+    const KVDB_URL = `https://kvdb.io/4T8m4e1uK9uS7yX2L2m1A1/${BUCKET_KEY}`;
 
     try {
         if (req.method === 'POST') {
-            // Permanently dagdagan ng +1 sa CountAPI
-            const postRes = await fetch(`https://api.countapi.xyz/hit/${NAMESPACE}/${KEY}`);
-            const data = await postRes.json();
-            return res.status(200).json({ count: data.value || 0 });
-        } else {
-            // Kunin ang permanent count
-            const getRes = await fetch(`https://api.countapi.xyz/get/${NAMESPACE}/${KEY}`);
-            const data = await getRes.json();
-            
-            // Kapag bago pa ang key, i-create sa 0
-            if (data.value === undefined) {
-                const createRes = await fetch(`https://api.countapi.xyz/create?namespace=${NAMESPACE}&key=${KEY}&value=0`);
-                const createData = await createRes.json();
-                return res.status(200).json({ count: createData.value || 0 });
+            // Kunin ang kasalukuyang count
+            const getRes = await fetch(KVDB_URL);
+            let currentCount = 0;
+            if (getRes.ok) {
+                const text = await getRes.text();
+                currentCount = parseInt(text, 10) || 0;
             }
+            
+            // Dagdagan ng 1 at i-save ulit sa KVDB
+            const newCount = currentCount + 1;
+            await fetch(KVDB_URL, {
+                method: 'POST',
+                body: newCount.toString()
+            });
 
-            return res.status(200).json({ count: data.value });
+            return res.status(200).json({ count: newCount });
+        } else {
+            // GET request para sa pag-read ng count
+            const getRes = await fetch(KVDB_URL);
+            let currentCount = 0;
+            if (getRes.ok) {
+                const text = await getRes.text();
+                currentCount = parseInt(text, 10) || 0;
+            }
+            return res.status(200).json({ count: currentCount });
         }
     } catch (err) {
         console.error("Counter Error:", err);
