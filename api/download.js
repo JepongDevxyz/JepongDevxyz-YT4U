@@ -7,7 +7,6 @@ module.exports = async (req, res) => {
     }
 
     try {
-        // Gumamit tayo ng maaasahang public cobalt API instance para sa Vercel deployment
         const data = JSON.stringify({
             url: videoURL,
             vQuality: "720",
@@ -36,9 +35,11 @@ module.exports = async (req, res) => {
 
                     const cleanTitle = (result.filename || 'youtube_media').replace(/[^\w\s]/gi, '').trim();
 
+                    // I-return ang JSON response na pwedeng gamitin bilang API
                     return res.status(200).json({
+                        success: true,
                         title: cleanTitle,
-                        mp3Url: result.url, // Kung audio ang gusto o direct download link
+                        mp3Url: result.url,
                         mp4Url: result.url,
                         mp3Filename: `${cleanTitle}.mp3`,
                         mp4Filename: `${cleanTitle}.mp4`
