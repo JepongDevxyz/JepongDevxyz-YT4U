@@ -24,7 +24,7 @@ export default async function handler(req, res) {
 
         const requestedFormat = (format && format.toLowerCase() === 'mp4') ? 'mp4' : 'mp3';
 
-        // 1. Fetch download link mula sa RapidAPI
+        // Fetch download link mula sa RapidAPI
         const apiResponse = await fetch(`https://youtube-mp36.p.rapidapi.com/dl?id=${videoId}`, {
             method: 'GET',
             headers: {
@@ -39,24 +39,23 @@ export default async function handler(req, res) {
             throw new Error(data.msg || "Hindi ma-extract ang video details.");
         }
 
-        // Kung MP4, ibalik lang ang direct link via JSON
+        // KUNG MP4: Ibalik ang direct download details sa JSON format
         if (requestedFormat === 'mp4') {
             return res.status(200).json({
                 title: data.title,
-                downloadUrl: data.link,
-                filename: `${data.title}.mp4`
+                downloadUrl: data.link, // Direct MP4 video download link
+                format: 'mp4'
             });
         }
 
-        // 2. Kung MP3, i-download natin ang buffer para ma-strip ang thumbnail/cover art
+        // KUNG MP3: I-fetch ang audio buffer para ma-strip ang thumbnail (APIC tag)
         const audioResponse = await fetch(data.link);
         const arrayBuffer = await audioResponse.arrayBuffer();
         let audioBuffer = Buffer.from(arrayBuffer);
 
-        // 3. Alisin ang Cover Art (APIC) at iba pang nakakabit na tags
+        // Alisin ang nakakabit na Album Art/Thumbnail gamit ang node-id3
         const cleanBuffer = NodeID3.removeTagsFromBuffer(audioBuffer);
 
-        // 4. Maglagay lang ng malinis na basic tags (walang image)
         const cleanTags = {
             title: data.title,
             artist: "YT4U"
@@ -64,7 +63,6 @@ export default async function handler(req, res) {
 
         const finalBuffer = NodeID3.write(cleanTags, cleanBuffer);
 
-        // 5. I-send ang malinis na MP3 file sa browser
         res.setHeader('Content-Type', 'audio/mpeg');
         res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(data.title)}.mp3"`);
         return res.send(finalBuffer);
