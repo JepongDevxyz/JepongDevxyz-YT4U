@@ -1,64 +1,48 @@
-const https = require('https');
-
 module.exports = async (req, res) => {
     const videoURL = req.query.url;
+    const format = req.query.format || 'mp3';
+
     if (!videoURL) {
         return res.status(400).json({ error: 'Walang nilagay na YouTube URL.' });
     }
 
     try {
-        const data = JSON.stringify({
-            url: videoURL,
-            vQuality: "720",
-            filenamePattern: "classic"
-        });
-
-        const options = {
-            hostname: 'co.wuk.sh',
-            path: '/api/json',
+        const response = await fetch('https://api.cobalt.tools/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
-        };
-
-        const apiReq = https.request(options, (apiRes) => {
-            let body = '';
-            apiRes.on('data', (chunk) => { body += chunk; });
-            apiRes.on('end', () => {
-                try {
-                    const result = JSON.parse(body);
-                    if (result.status === 'error' || !result.url) {
-                        return res.status(500).json({ error: result.text || 'Hindi ma-process ang video.' });
-                    }
-
-                    const cleanTitle = (result.filename || 'youtube_media').replace(/[^\w\s]/gi, '').trim();
-
-                    // I-return ang JSON response na pwedeng gamitin bilang API
-                    return res.status(200).json({
-                        success: true,
-                        title: cleanTitle,
-                        mp3Url: result.url,
-                        mp4Url: result.url,
-                        mp3Filename: `${cleanTitle}.mp3`,
-                        mp4Filename: `${cleanTitle}.mp4`
-                    });
-                } catch (e) {
-                    return res.status(500).json({ error: 'Nagka-error sa pag-parse ng data.' });
-                }
-            });
+                'Accept': 'application/json',
+                'User-Agent': 'Mozilla/5.0'
+            },
+            body: JSON.stringify({
+                url: videoURL,
+                downloadMode: format === 'mp4' ? 'auto' : 'audio'
+            })
         });
 
-        apiReq.on('error', (e) => {
-            return res.status(500).json({ error: 'Nabigo ang koneksyon sa downloader service.' });
-        });
+        const result = await response.json();
 
-        apiReq.write(data);
-        apiReq.end();
+        if (!response.ok || result.status === 'error' || (!result.url && !result.picker)) {
+            return res.status(500).json({ error: result.text || 'Hindi ma-process ang video.' });
+        }
+
+        const downloadUrl = result.url || (result.picker && result.picker[0] ? result.picker[0].url : null);
+        if (!downloadUrl) {
+            return res.status(500).json({ error: 'Walang nakuha na download link.' });
+        }
+
+        const cleanTitle = (result.filename || 'youtube_media').replace(/[^\w\s]/gi, '').trim();
+        const extension = format === 'mp4' ? 'mp4' : 'mp3';
+
+        return res.status(200).json({
+            success: true,
+            title: cleanTitle,
+            downloadUrl: downloadUrl,
+            filename: `${cleanTitle}.${extension}`
+        });
 
     } catch (error) {
         console.error('API Error:', error);
-        return res.status(500).json({ error: 'Server error.' });
+        return res.status(500).json({ error: 'Server connection error.' });
     }
 };
