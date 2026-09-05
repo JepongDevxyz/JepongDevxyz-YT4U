@@ -11,7 +11,8 @@ export default async function handler(req, res) {
     try {
         const isMp4 = format && format.toLowerCase() === 'mp4';
 
-        const response = await fetch('https://api.cobalt.tools/api/json', {
+        // Paggamit ng gumaganang Cobalt v10 instance
+        const response = await fetch('https://cobalt-api.kwippy.com/', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
@@ -30,7 +31,7 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: data.text || "Hindi ma-process ang video." });
         }
 
-        if (data.status === 'redirect' || data.status === 'stream') {
+        if (data.status === 'redirect' || data.status === 'stream' || data.url) {
             return res.status(200).json({
                 downloadUrl: data.url,
                 format: isMp4 ? 'mp4' : 'mp3'
