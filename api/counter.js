@@ -2,36 +2,36 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
 
-    const BUCKET_KEY = 'jepongdevxyz_yt4u_counter';
-    const KVDB_URL = `https://kvdb.io/4T8m4e1uK9uS7yX2L2m1A1/${BUCKET_KEY}`;
+    // Palitan ang mga ito ng UPSTASH_REDIS_REST_URL at UPSTASH_REDIS_REST_TOKEN mo mula sa Upstash Dashboard
+    // Mas maganda ring ilagay ito sa Vercel Environment Variables: process.env.UPSTASH_REDIS_REST_URL
+    const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL || "YOUR_UPSTASH_REST_URL";
+    const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || "YOUR_UPSTASH_REST_TOKEN";
+
+    const COUNTER_KEY = "yt4u_global_generated_count";
 
     try {
         if (req.method === 'POST') {
-            const getRes = await fetch(KVDB_URL);
-            let currentCount = 0;
-            if (getRes.ok) {
-                const text = await getRes.text();
-                currentCount = parseInt(text, 10) || 0;
-            }
-            
-            const newCount = currentCount + 1;
-            await fetch(KVDB_URL, {
-                method: 'POST',
-                body: newCount.toString()
+            // INCR command - atomic at permanently dagdag +1 sa Redis
+            const postRes = await fetch(`${REDIS_URL}/incr/${COUNTER_KEY}`, {
+                headers: {
+                    Authorization: `Bearer ${REDIS_TOKEN}`
+                }
             });
-
-            return res.status(200).json({ count: newCount });
+            const data = await postRes.json();
+            return res.status(200).json({ count: data.result || 0 });
         } else {
-            const getRes = await fetch(KVDB_URL);
-            let currentCount = 0;
-            if (getRes.ok) {
-                const text = await getRes.text();
-                currentCount = parseInt(text, 10) || 0;
-            }
-            return res.status(200).json({ count: currentCount });
+            // GET command - kunin ang kasalukuyang bilang
+            const getRes = await fetch(`${REDIS_URL}/get/${COUNTER_KEY}`, {
+                headers: {
+                    Authorization: `Bearer ${REDIS_TOKEN}`
+                }
+            });
+            const data = await getRes.json();
+            const count = parseInt(data.result, 10) || 0;
+            return res.status(200).json({ count: count });
         }
     } catch (err) {
-        console.error("Counter Error:", err);
+        console.error("Redis Counter Error:", err);
         return res.status(200).json({ count: 0 });
     }
 }
